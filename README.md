@@ -23,6 +23,9 @@ The `closest_population_finder.py` script finds the genetically closest referenc
 
 ###  `my_sample.csv`
 A CSV file with a **single** sample and 25-dimensional coordinates:
+You can also exrtract the PCs from the g25 data or use your own data 
+### How to run 
+just use : python closest_population_finder.py --sample my_sample.csv --reference reference_populations.csv --top_n 10 --output plot.png
 
 ```csv
 ,PC1,PC2,PC3,...,PC25
