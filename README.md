@@ -28,6 +28,9 @@ You can also exrtract the PCs from the g25 data or use your own data
 
 ```bash
 python closest_population_finder.py --sample my_sample.csv --reference Global25_PCA_modern_scaled.csv --top_n 10 --output plot.png
+
+```
+
 ```csv
 ,PC1,PC2,PC3,...,PC25
 SampleName,val1,val2,val3,...,val25
