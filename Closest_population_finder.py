@@ -14,17 +14,22 @@ def get_closest_populations(sample_df, ref_df):
         results[sample_name] = sorted(distances.items(), key=lambda x: x[1])
     return results
 
-def plot_top_matches(sample_name, top_matches):
+def plot_top_matches(sample_name, top_matches, output_path=None):
     labels = [x[0] for x in top_matches]
     values = [x[1] for x in top_matches]
 
     plt.barh(labels[::-1], values[::-1])
-    plt.title(f"Top 5 Closest Populations to {sample_name}")
+    plt.title(f"Top {len(top_matches)} Closest Populations to {sample_name}")
     plt.xlabel("Euclidean Distance")
     plt.tight_layout()
-    plt.show()
+    
+    if output_path:
+        plt.savefig(output_path)
+        print(f"Plot saved to {output_path}")
+    else:
+        plt.show()
 
-def main(sample_path, reference_path):
+def main(sample_path, reference_path, top_n=5, output=None):
     if not os.path.exists(sample_path) or not os.path.exists(reference_path):
         print("Error: One or both input files not found.")
         return
@@ -38,18 +43,20 @@ def main(sample_path, reference_path):
 
     # Display and plot results for first sample
     sample_name = list(closest.keys())[0]
-    top_matches = closest[sample_name][:5]
+    top_matches = closest[sample_name][:top_n]
 
-    print(f"\nTop 5 closest populations to {sample_name}:")
+    print(f"\nTop {top_n} closest populations to {sample_name}:")
     for name, dist in top_matches:
         print(f"{name}: {dist:.4f}")
 
-    plot_top_matches(sample_name, top_matches)
+    plot_top_matches(sample_name, top_matches, output)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Find genetically closest populations.")
     parser.add_argument("--sample", required=True, help="Path to your sample CSV file")
     parser.add_argument("--reference", required=True, help="Path to reference population CSV file")
+    parser.add_argument("--top_n", type=int, default=5, help="Number of top matches to display (default: 5)")
+    parser.add_argument("--output", type=str, help="Path to save the plot image (optional)")
 
     args = parser.parse_args()
-    main(args.sample, args.reference)
+    main(args.sample, args.reference, args.top_n, args.output)
