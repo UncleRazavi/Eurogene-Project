@@ -33,13 +33,12 @@ def plot_pie_chart(name, populations, coeffs):
     plt.figure(figsize=(7, 7))
     wedges, texts, autotexts = plt.pie(
         coeffs,
-        labels=None,  # No labels directly on pie
+        labels=None, 
         autopct='%1.1f%%',
         startangle=140,
         textprops={'fontsize': 10}
     )
 
-    # Add a legend instead of labels on the pie
     plt.legend(wedges, populations, title="Sources", loc="center left", bbox_to_anchor=(1, 0.5), fontsize=9)
 
     plt.axis('equal')
