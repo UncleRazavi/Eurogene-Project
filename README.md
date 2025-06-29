@@ -59,5 +59,5 @@ Example Ancient Sources:
 ```
 # How to run : 
 ```bash
- python ancestry_decomposition.py --target "my_sample.txt" --ancient "Global25_PCA_scaled (Ancient Individuals).txt"
+ python ancestry_decomposition.py --target "my_sample.csv" --ancient "Global25_PCA_scaled (Ancient Individuals).csv"
 ```
