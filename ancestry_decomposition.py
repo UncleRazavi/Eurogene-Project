@@ -11,7 +11,6 @@ TARGET_SOURCES = {
     "China_AmurRiver_N", "Georgia_Kotias.SG", "Russia_Karelia_HG", "Russia_Baikal_EN",
     "Morocco_Iberomaurusian"
 }
-
 def load_data(target_path, ancient_path):
 
     target_data = pd.read_csv(target_path, index_col=0)
@@ -30,21 +29,49 @@ def fit_nnls(target_vector, sources_matrix):
     return coeffs
 
 def plot_pie_chart(name, populations, coeffs):
-    plt.figure(figsize=(7, 7))
+
+    plt.figure(figsize=(9, 9)) 
+    
+    non_zero_indices = np.where(coeffs > 1e-4)[0] 
+    filtered_coeffs = coeffs[non_zero_indices]
+    filtered_populations = [populations[i] for i in non_zero_indices]
+
+    colors = plt.cm.Paired(np.linspace(0, 1, len(filtered_populations))) 
+    
     wedges, texts, autotexts = plt.pie(
-        coeffs,
-        labels=None, 
-        autopct='%1.1f%%',
+        filtered_coeffs,
+        labels=None,  
+        autopct='%1.1f%%', 
         startangle=140,
+        colors=colors,
         textprops={'fontsize': 10}
     )
 
-    plt.legend(wedges, populations, title="Sources", loc="center left", bbox_to_anchor=(1, 0.5), fontsize=9)
+    displayed_percentages = set()
+    for i, autotext in enumerate(autotexts):
+        percent_str = autotext.get_text()
+        if percent_str: 
+            try:
+            
+                percent_value = float(percent_str.strip('%'))
+                if percent_value in displayed_percentages:
+                    autotext.set_text('') 
+                else:
+                    displayed_percentages.add(percent_value)
+            except ValueError:
+                pass
+            
+    legend_labels = []
+    for i, pop in enumerate(filtered_populations):
+        percent = filtered_coeffs[i] * 100
+        legend_labels.append(f"{pop} ({percent:.1f}%)")
 
-    plt.axis('equal')
-    plt.title(f"Ancestry of {name}")
-    plt.tight_layout()
-    plt.show()
+    plt.legend(wedges, legend_labels, title="Sources", loc="center left", bbox_to_anchor=(1, 0.5), fontsize=9)
+
+    plt.axis('equal') 
+    plt.title(f"Ancestry of {name}") 
+    plt.tight_layout() 
+    plt.show() 
 
 def main(target_path, ancient_path):
     target_data, ancient_averaged = load_data(target_path, ancient_path)
