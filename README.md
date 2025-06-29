@@ -57,3 +57,7 @@ Example Ancient Sources:
     Turkey_N, Russia_Samara_EBA_Yamnaya, Iran_Wezmeh_N.SG, Israel_Natufian,
     China_AmurRiver_N, Georgia_Kotias.SG, Russia_Karelia_HG, Russia_Baikal_EN, Morocco_Iberomaurusian
 ```
+# How to run : 
+```bash
+ python ancestry_decomposition.py --target "my_sample.txt" --ancient "Global25_PCA_scaled (Ancient Individuals).txt"
+```
