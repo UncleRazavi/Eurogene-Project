@@ -42,15 +42,16 @@ Iranian_Persian_Shiraz:SHII20,0.094473,0.105615,-0.07203,-0.027132,-0.046162,-0.
 # Ancestry Decomposition via NNLS
 
 The ancestry_decomposition.py script estimates the ancestral makeup of individuals using non-negative least squares (NNLS) regression. This method takes a target individual's 25-dimensional G25 coordinates and models them as a linear combination of selected ancient reference populations.
-Features:
 
-  ### Uses a set of predefined ancient populations as ancestry sources
+## Features:
 
-  ### Solves the ancestry proportions using non-negative least squares
+  - Uses a set of predefined ancient populations as ancestry sources
 
-  ### Displays the estimated ancestry as a pie chart
+  - Solves the ancestry proportions using non-negative least squares
 
-  ### Helps interpret admixture and ancestral origins in a quantitative way
+  - Displays the estimated ancestry as a pie chart
+
+  - Helps interpret admixture and ancestral origins in a quantitative way
 
 Example Ancient Sources:
 ```
