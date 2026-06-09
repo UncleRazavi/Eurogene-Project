@@ -14,7 +14,9 @@ The `closest_population_finder.py` script finds the genetically closest referenc
 
 ###  Features:
 - Computes genetic distances from reference populations
-- Prints top 5 closest matches
+- Prints closest matches for every sample in the input file
+- Validates the required PC1-PC25 columns
+- Saves optional CSV/JSON result files
 - Visualizes the result with a horizontal bar chart
 
 ---
@@ -27,7 +29,7 @@ You can also exrtract the PCs from the g25 data or use your own data
 ### How to run 
 
 ```bash
-python closest_population_finder.py --sample my_sample.csv --reference Global25_PCA_modern_scaled.csv --top_n 10 --output plot.png
+python Closest_population_finder.py --sample my_sample.csv --reference Global25_PCA_modern_scaled.csv --top_n 10 --output Results/closest.png --output_csv Results/closest.csv --output_json Results/closest.json
 
 ```
 
@@ -49,7 +51,13 @@ The ancestry_decomposition.py script estimates the ancestral makeup of individua
 
   - Solves the ancestry proportions using non-negative least squares
 
-  - Displays the estimated ancestry as a pie chart
+  - Displays or saves the estimated ancestry as a pie chart
+
+  - Saves optional CSV/JSON ancestry results
+
+  - Reports a fit distance so weak models are easier to spot
+
+  - Supports custom source lists with `--sources`
 
   - Helps interpret admixture and ancestral origins in a quantitative way
 
@@ -60,5 +68,19 @@ Example Ancient Sources:
 ```
 # How to run : 
 ```bash
- python ancestry_decomposition.py --target "my_sample.csv" --ancient "Global25_PCA_scaled (Ancient Individuals).csv"
+python ancestry_decomposition.py --target "my_sample.csv" --ancient "Global25_PCA_scaled (Ancient Individuals).csv" --output Results/ancestry.png --output_csv Results/ancestry.csv --output_json Results/ancestry.json
+```
+
+Optional custom sources file:
+
+```bash
+python ancestry_decomposition.py --target "my_sample.csv" --ancient "Global25_PCA_scaled (Ancient Individuals).csv" --sources sources.txt
+```
+
+Each line in `sources.txt` should contain one population name, for example:
+
+```text
+Turkey_N
+Israel_Natufian
+Iran_Wezmeh_N.SG
 ```
