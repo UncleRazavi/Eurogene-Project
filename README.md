@@ -131,4 +131,8 @@ Migration flow animation (Bronze Age expansions)
 Temporal PCA (Neolithic → Iron Age)
 Heatmap-based ancestry density maps
 Streamlit web dashboard
+<<<<<<< HEAD
 Ancient DNA time slider
+=======
+Ancient DNA time slider
+>>>>>>> 834d8056c106128e72d7678db8e180d772bb0150
