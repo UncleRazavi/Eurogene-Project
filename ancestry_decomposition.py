@@ -1,4 +1,5 @@
 import argparse
+import os
 import pandas as pd
 import numpy as np
 from scipy.optimize import nnls
@@ -36,12 +37,18 @@ def read_sources(source_path):
 
     if not sources:
         raise ValueError("No valid sources found.")
+
     return sources
 
 
 # --------------------------------------------------
 def load_data(target_path, ancient_path, sources):
+
     target_data = load_g25_csv(target_path, "Target")
+
+    # ensure PC order
+    target_data = target_data[PC_COLUMNS]
+
     ancient = pd.read_csv(ancient_path, index_col=0)
 
     ancient["Population"] = ancient.index.to_series().apply(
@@ -52,23 +59,37 @@ def load_data(target_path, ancient_path, sources):
 
     missing = [c for c in PC_COLUMNS if c not in ancient.columns]
     if missing:
-        raise ValueError(f"Missing columns: {missing}")
+        raise ValueError(f"Missing PC columns in ancient dataset: {missing}")
 
     ancient[PC_COLUMNS] = ancient[PC_COLUMNS].apply(
         pd.to_numeric, errors="coerce"
     )
-    ancient = ancient.dropna()
+
+    ancient = ancient.dropna(subset=PC_COLUMNS)
 
     grouped = ancient.groupby("Population")[PC_COLUMNS].mean()
+
+    if grouped.empty:
+        raise ValueError("No matching ancient populations found.")
 
     return target_data, grouped
 
 
 # --------------------------------------------------
 def fit_nnls(target_vec, source_matrix):
-    coeffs, _ = nnls(source_matrix.T, target_vec)
+    """
+    Solve mixture using NNLS
+    source_matrix shape: (sources, PCs)
+    target_vec shape: (PCs)
+    """
+
+    A = source_matrix.T
+    b = target_vec
+
+    coeffs, _ = nnls(A, b)
 
     total = coeffs.sum()
+
     if total <= 0:
         raise ValueError("NNLS returned zero solution")
 
@@ -78,8 +99,8 @@ def fit_nnls(target_vec, source_matrix):
 # --------------------------------------------------
 def run_ancestry(target_path, ancient_path, source_path=None):
     """
-    IMPORT-SAFE FUNCTION FOR ATLAS MODULE
-    Returns: {population: proportion}
+    Import-safe function
+    Returns dict for first sample
     """
 
     sources = read_sources(source_path)
@@ -88,24 +109,41 @@ def run_ancestry(target_path, ancient_path, source_path=None):
     pops = list(ancient.index)
     matrix = ancient.values
 
-    for _, row in target_data.iterrows():
+    results = {}
+
+    for name, row in target_data.iterrows():
+
         coeffs = fit_nnls(row.values, matrix)
 
-        return {
+        results[name] = {
             pop: float(w)
             for pop, w in zip(pops, coeffs)
         }
 
-    return {}
+    return results
+
+
+# --------------------------------------------------
+def ensure_dir(path):
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
 
 
 # --------------------------------------------------
 def write_outputs(df, output_csv, output_json):
+
+    if output_csv:
+        ensure_dir(output_csv)
+
+    if output_json:
+        ensure_dir(output_json)
+
     write_results(df, output_csv, output_json)
 
 
 # --------------------------------------------------
 def main(target_path, ancient_path, source_path, output_csv, output_json):
+
     sources = read_sources(source_path)
     target_data, ancient = load_data(target_path, ancient_path, sources)
 
@@ -115,6 +153,7 @@ def main(target_path, ancient_path, source_path, output_csv, output_json):
     rows = []
 
     for name, row in target_data.iterrows():
+
         coeffs = fit_nnls(row.values, matrix)
 
         modeled = coeffs @ matrix
@@ -123,6 +162,7 @@ def main(target_path, ancient_path, source_path, output_csv, output_json):
         print(f"\n{name}")
 
         for pop, coef in zip(pops, coeffs):
+
             print(f"{pop:25} {coef:.2%}")
 
             rows.append({
@@ -130,17 +170,19 @@ def main(target_path, ancient_path, source_path, output_csv, output_json):
                 "source": pop,
                 "proportion": float(coef),
                 "percent": float(coef * 100),
-                "fit_distance": dist
+                "fit_distance": float(dist)
             })
 
-        print(f"Fit distance: {dist:.4f}")
+        print(f"Fit distance: {dist:.6f}")
 
     df = pd.DataFrame(rows)
+
     write_outputs(df, output_csv, output_json)
 
 
 # --------------------------------------------------
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(
         description="G25 Ancestry Decomposition using NNLS"
     )

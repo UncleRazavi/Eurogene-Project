@@ -2,8 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
+import seaborn as sns
+from scipy.spatial.distance import squareform, pdist 
 
-from g25_utils import load_g25_csv, write_results
+from g25_utils import fit_distance, load_g25_csv, write_results
 
 def get_closest_populations(sample_df, ref_df):
     results = {}
@@ -25,7 +27,7 @@ def plot_top_matches(sample_name, top_matches, output_path=None):
     
     if output_path:
         plt.savefig(output_path)
-        print(f"Plot saved to {output_path}")
+        print(f" Plot saved to {output_path}")
     else:
         plt.show()
 
@@ -41,7 +43,44 @@ def flatten_results(closest, top_n):
             })
     return pd.DataFrame(rows)
 
-def main(sample_path, reference_path, top_n=5, output=None, output_csv=None, output_json=None):
+def plot_clustermap(sample_name, sample_vector, top_matches_df, output_path=None):
+    print(f" Generating spacious clustermap for {sample_name}...")
+    
+    combined_df = pd.concat(
+        [sample_vector.to_frame(name=sample_name).T, top_matches_df]
+)      
+    distance_matrix = pd.DataFrame(
+        squareform(pdist(combined_df, metric='euclidean')),
+        columns=combined_df.index,
+        index=combined_df.index
+    )
+    
+    num_items = len(combined_df)
+    fig_size = max(10, num_items * 0.5) 
+    
+    g = sns.clustermap(
+        distance_matrix,
+        cmap="viridis_r",  
+        annot=True,      
+        fmt=".2f",
+        figsize=(fig_size, fig_size),       
+        annot_kws = { "size" :8 },             
+        tree_kws={"linewidths": 1.5}       
+    )
+    
+    plt.setp(g.ax_heatmap.get_xticklabels(), rotation=45, ha="right")
+    
+    g.fig.suptitle(f"Clustermap for {sample_name} and Top {len(top_matches_df)} Populations", y=1.02)
+    
+    if output_path:
+        clustermap_output_path = output_path.replace('.png', f'_{sample_name}_clustermap.png')
+        g.savefig(clustermap_output_path, bbox_inches='tight', dpi=300) 
+        print(f" Clustermap generously saved to {clustermap_output_path}")
+    else:
+        plt.show()
+
+
+def main(sample_path, reference_path, top_n=5, output=None, output_csv=None, output_json=None, plot_type="bar"):
     sample_df = load_g25_csv(sample_path, "Sample")
     ref_df = load_g25_csv(reference_path, "Reference")
     closest = get_closest_populations(sample_df, ref_df)
@@ -53,6 +92,7 @@ def main(sample_path, reference_path, top_n=5, output=None, output_csv=None, out
         for rank, (name, dist) in enumerate(top_matches, start=1):
             print(f"{rank:>2}. {name}: {dist:.4f}")
 
+        plot_path = None
         if output:
             if len(closest) == 1:
                 plot_path = output
@@ -60,9 +100,14 @@ def main(sample_path, reference_path, top_n=5, output=None, output_csv=None, out
                 safe_name = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(sample_name))
                 root, ext = output.rsplit(".", 1) if "." in output else (output, "png")
                 plot_path = f"{root}_{safe_name}.{ext}"
+        
+        if plot_type == "bar":
             plot_top_matches(sample_name, top_matches, plot_path)
-        elif len(closest) == 1:
-            plot_top_matches(sample_name, top_matches)
+        elif plot_type == "clustermap":
+            sample_vector = sample_df.loc[sample_name]
+            top_match_names = [x[0] for x in top_matches]
+            top_matches_df = ref_df.loc[top_match_names] 
+            plot_clustermap(sample_name, sample_vector, top_matches_df, plot_path)
 
     write_results(results_df, output_csv, output_json)
 
@@ -74,9 +119,10 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, help="Path to save the plot image (optional)")
     parser.add_argument("--output_csv", type=str, help="Path to save tabular results as CSV")
     parser.add_argument("--output_json", type=str, help="Path to save tabular results as JSON")
+    parser.add_argument("--plot_type", type=str, default="bar", choices=["bar", "clustermap"], help="نوع نمودار خروجی: bar یا clustermap")
 
     args = parser.parse_args()
     try:
-        main(args.sample, args.reference, args.top_n, args.output, args.output_csv, args.output_json)
+        main(args.sample, args.reference, args.top_n, args.output, args.output_csv, args.output_json, args.plot_type)
     except (FileNotFoundError, ValueError) as exc:
         print(f"[Error] {exc}")
