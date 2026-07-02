@@ -1,67 +1,65 @@
 # Eurogenes G25 Genetic Analysis
 
-This project analyzes genetic data from the **Eurogenes G25 dataset** using dimensionality reduction, clustering, and ancestry modeling techniques.
+This project analyzes Eurogenes G25-style coordinates with PCA visualization,
+closest-population matching, and NNLS ancestry decomposition.
 
-It includes:
+## Project Layout
 
-- PCA-based population structure visualization (2D/3D)
-- KMeans clustering of genetic populations
-- Interactive geographic “genetic atlas”
-- NNLS-based ancestry decomposition
-- Closest population matching via Euclidean distance
-- Combined visualization of genetic + geographic structure
+- `Data/g25_data.csv` - modern reference G25 coordinates
+- `Data/my_sample.csv` - target sample coordinates
+- `Data/Global25_PCA_scaled (Ancient Individuals).csv` - ancient source data
+- `Results/` - generated HTML, screenshots, PNG plots, CSV files, and JSON files
 
----
+## Generated Results
 
-#  Genetic Population Matcher
+The current bundled sample is `Mixed_Turkmen25_Tatar75`.
 
-The `closest_population_finder.py` script finds genetically closest reference populations to a sample using Euclidean distance across 25-dimensional G25 coordinates.
+Generated files:
 
-## Features:
-- Computes genetic distance to reference populations
-- Finds closest matches for each sample
-- Validates PC1–PC25 input format
-- Outputs results in CSV / JSON format
-- Optional visualization (bar plot of closest populations)
+- `Results/atlas.html` - interactive Plotly atlas
+- `Results/atlas_screenshot.png` - screenshot of the atlas
+- `Results/closest.png` - closest-population bar chart
+- `Results/closest_Mixed_Turkmen25_Tatar75_clustermap.png` - closest-population clustermap
+- `Results/closest.csv` - closest-population table
+- `Results/closest.json` - closest-population JSON
+- `Results/ancestry_decomposition.png` - NNLS ancestry plot
+- `Results/ancestry.csv` - NNLS ancestry table
+- `Results/ancestry.json` - NNLS ancestry JSON
 
----
+## Run The Atlas
 
-## Input Format
-
-## `my_sample.csv`
-
-## A CSV file containing one or more samples with 25-dimensional coordinates:
-
-```csv
-,PC1,PC2,PC3,...,PC25
-SampleName,val1,val2,val3,...,val25
-``` 
-## Example 
-```csv
-,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10,PC11,PC12,PC13,PC14,PC15,PC16,PC17,PC18,PC19,PC20,PC21,PC22,PC23,PC24,PC25
-Iranian_Persian_Shiraz:SHII20,0.094473,0.105615,-0.07203,-0.027132,-0.046162,-0.006136,0.001175,-0.009692,-0.038246,-0.017312,0.00341,-0.004646,0,-0.004679,0.004614,0.013259,-0.010691,0.002534,0.004399,-0.004877,0.008984,-0.001855,-0.002095,-0.005061,0.00479
+```bash
+python atlas.py --modern Data/g25_data.csv --target Data/my_sample.csv --ancient "Data/Global25_PCA_scaled (Ancient Individuals).csv" --output_html Results/atlas.html --clusters 6
 ```
 
-```bash 
-python Closest_population_finder.py --sample my_sample.csv --reference g25_data.csv --top_n 10 --output Results/closest.png --output_csv Results/closest.csv 
---output_json Results/closest.json
+The atlas includes:
+
+- 3D PCA reference cloud
+- highlighted target sample
+- labeled nearest reference populations
+- ancestry source map
+- closest-reference distance chart
+
+## Closest Population Finder
+
+```bash
+python Closest_population_finder.py --sample Data/my_sample.csv --reference Data/g25_data.csv --top_n 10 --output Results/closest.png --output_csv Results/closest.csv --output_json Results/closest.json
 ```
 
-# Ancestry Decomposition (NNLS Model)
+Optional clustermap:
 
-# Estimates ancestral composition using non-negative least squares regression.
+```bash
+python Closest_population_finder.py --sample Data/my_sample.csv --reference Data/g25_data.csv --top_n 10 --output Results/closest.png --plot_type clustermap
+```
 
-Each individual is modeled as a weighted mixture of ancient populations.
+## Ancestry Decomposition
 
-- Features
-- Ancient population-based modeling
-- NNLS optimization
-- Ancestry proportions estimation
-- Pie chart visualization
-- Fit quality (error distance)
-- Custom source panels
+```bash
+python ancestry_decomposition.py --target Data/my_sample.csv --ancient "Data/Global25_PCA_scaled (Ancient Individuals).csv" --output Results/ancestry_decomposition.png --output_csv Results/ancestry.csv --output_json Results/ancestry.json
+```
 
-## Ancient Sources
+Default ancient sources:
+
 - Turkey_N
 - Russia_Samara_EBA_Yamnaya
 - Iran_Wezmeh_N.SG
@@ -72,67 +70,18 @@ Each individual is modeled as a weighted mixture of ancient populations.
 - Russia_Baikal_EN
 - Morocco_Iberomaurusian
 
-## Run
-```bash
-python ancestry_decomposition.py \
-  --target my_sample.csv \
-  --ancient "Global25_PCA_scaled (Ancient Individuals).csv" \
-  --output Results/ancestry.png \
-  --output_csv Results/ancestry.csv \
-  --output_json Results/ancestry.json
-  ```
+## Input Format
 
+Input CSV files must include `PC1` through `PC25`:
 
-## Custom Source Panel
-```bash
-python ancestry_decomposition.py \
-  --target my_sample.csv \
-  --ancient "Global25_PCA_scaled (Ancient Individuals).csv" \
-  --sources sources.txt
+```csv
+,PC1,PC2,PC3,...,PC25
+SampleName,val1,val2,val3,...,val25
 ```
-Each line:
 
-- Turkey_N
-- Israel_Natufian
-- Iran_Wezmeh_N.SG
+## Notes
 
-# Interactive Genetic Atlas
-
-## The atlas.py module provides a full interactive visualization system combining:
-
-- PCA (trained on modern populations)
-- KMeans clustering
-- Geographic projection of populations
-- NNLS ancestry centroid mapping
-- Interactive Plotly HTML output
-# Features
-- 3D PCA genetic space
-- Clustered modern populations
-- Eurasian geographic map
-- Ancestry centroid projection
-- Fully interactive HTML output
-
-```bash
-python atlas.py --modern Data/g25_data.csv --target Data/my_sample.csv --ancient "Global25_PCA_scaled (Ancient Individuals).csv" --output_html Results/atlas.html --clusters 6
-  ```
-
-# Notes
-PCA is trained only on modern populations
-Ancient populations are used only for ancestry inference
-Outputs are fully reproducible and script-based
-Designed for exploratory population genetics research
-## Scientific Interpretation
-PCA captures major genetic variation axes
-NNLS estimates admixture proportions
-Geographic projection approximates ancestral centers
-Clustering reveals structure in modern populations
-## Future Improvements
-Migration flow animation (Bronze Age expansions)
-Temporal PCA (Neolithic → Iron Age)
-Heatmap-based ancestry density maps
-Streamlit web dashboard
-<<<<<<< HEAD
-Ancient DNA time slider
-=======
-Ancient DNA time slider
->>>>>>> 834d8056c106128e72d7678db8e180d772bb0150
+PCA is trained on modern reference populations. Ancient populations are used for
+NNLS ancestry inference and the heuristic geographic centroid. These outputs are
+for exploratory population genetics visualization and should not be interpreted
+as direct ancestry proof.

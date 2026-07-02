@@ -2,6 +2,10 @@ import argparse
 import os
 import pandas as pd
 import numpy as np
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 from scipy.optimize import nnls
 
 from g25_utils import PC_COLUMNS, fit_distance, load_g25_csv, write_results
@@ -125,8 +129,9 @@ def run_ancestry(target_path, ancient_path, source_path=None):
 
 # --------------------------------------------------
 def ensure_dir(path):
-    if path:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+    directory = os.path.dirname(path) if path else ""
+    if directory:
+        os.makedirs(directory, exist_ok=True)
 
 
 # --------------------------------------------------
@@ -142,7 +147,32 @@ def write_outputs(df, output_csv, output_json):
 
 
 # --------------------------------------------------
-def main(target_path, ancient_path, source_path, output_csv, output_json):
+def plot_ancestry(df, output_path):
+    if not output_path:
+        return
+
+    ensure_dir(output_path)
+
+    plot_df = df[df["proportion"] > 0].copy()
+    plot_df = plot_df.sort_values("proportion", ascending=False)
+
+    labels = plot_df["source"]
+    values = plot_df["percent"]
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+    ax.barh(labels[::-1], values[::-1], color="#4c9f70")
+    ax.set_xlabel("Estimated ancestry (%)")
+    ax.set_title(f"NNLS Ancestry Decomposition: {plot_df['sample'].iloc[0]}")
+    ax.grid(axis="x", alpha=0.25)
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=200)
+    plt.close(fig)
+
+    print(f"PNG plot saved to {output_path}")
+
+
+# --------------------------------------------------
+def main(target_path, ancient_path, source_path, output_png, output_csv, output_json):
 
     sources = read_sources(source_path)
     target_data, ancient = load_data(target_path, ancient_path, sources)
@@ -177,6 +207,7 @@ def main(target_path, ancient_path, source_path, output_csv, output_json):
 
     df = pd.DataFrame(rows)
 
+    plot_ancestry(df, output_png)
     write_outputs(df, output_csv, output_json)
 
 
@@ -190,6 +221,7 @@ if __name__ == "__main__":
     parser.add_argument("--target", required=True)
     parser.add_argument("--ancient", required=True)
     parser.add_argument("--sources", default=None)
+    parser.add_argument("--output", default=None)
     parser.add_argument("--output_csv", default=None)
     parser.add_argument("--output_json", default=None)
 
@@ -199,6 +231,7 @@ if __name__ == "__main__":
         args.target,
         args.ancient,
         args.sources,
+        args.output,
         args.output_csv,
         args.output_json
     )
